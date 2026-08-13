@@ -61,7 +61,14 @@ def get_variants(
     url = BASE_URL + quote(market_hash_name)
 
     for attempt in range(1, retries + 1):
-        response = requests.get(url, headers=HEADERS, timeout=20)
+        try:
+            response = requests.get(url, headers=HEADERS, timeout=20)
+        except requests.exceptions.RequestException as e:
+            print(f"  сетевая ошибка: {type(e).__name__}")
+            if attempt < retries:
+                time.sleep(delay)
+                continue
+            return None
 
         if response.status_code != 200:
             print(f"  страница недоступна ({response.status_code})")
