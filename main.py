@@ -1,9 +1,12 @@
 import json
 import time
+from datetime import datetime
+from exporter import export_to_excel
+from parsers import parse_price, parse_volume
 
 from price_fetcher import get_price
 
-DELAY = 4  
+DELAY = 4
 
 
 def load_items(path: str = "items.json") -> list[str]:
@@ -24,9 +27,9 @@ def collect_prices(items: list[str]) -> list[dict]:
         else:
             results.append({
                 "name": name,
-                "lowest": data.get("lowest_price"),
-                "median": data.get("median_price"),
-                "volume": data.get("volume"),
+                "lowest": parse_price(data.get("lowest_price")),
+                "median": parse_price(data.get("median_price")),
+                "volume": parse_volume(data.get("volume")),
             })
             print(f"  {data.get('lowest_price')}")
 
@@ -37,6 +40,10 @@ def collect_prices(items: list[str]) -> list[dict]:
 
 
 if __name__ == "__main__":
-    items = load_items()
+    if __name__ == "__main__":
+        items = load_items()
     prices = collect_prices(items)
     print(f"\nСобрано: {len(prices)} позиций")
+
+    stamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
+    export_to_excel(prices, f"prices_{stamp}.xlsx")
