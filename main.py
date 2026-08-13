@@ -1,12 +1,14 @@
 import json
 import time
 from datetime import datetime
-from exporter import export_to_excel
-from parsers import parse_price, parse_volume
 
 from price_fetcher import get_price
+from listing_parser import get_variants
+from parsers import parse_price, parse_volume
+from exporter import export_to_excel
 
-DELAY = 4
+DELAY = 4          # пауза между запросами цен
+VARIANTS_DELAY = 6  # пауза между запросами HTML-страниц, они тяжелее
 
 
 def load_items(path: str = "items.json") -> list[str]:
@@ -39,11 +41,41 @@ def collect_prices(items: list[str]) -> list[dict]:
     return results
 
 
+def collect_variants(items: list[str]) -> list[dict]:
+    """Собирает цены по всем состояниям для каждого предмета."""
+    rows = []
+
+    for index, name in enumerate(items, start=1):
+        print(f"[{index}/{len(items)}] варианты: {name}")
+        variants = get_variants(name)
+
+        if not variants:
+            continue
+
+        for v in variants:
+            rows.append({
+                "source": name,
+                "variant": v["name"],
+                "exterior": v["exterior"],
+                "min_price": v["min_price"],
+            })
+
+        print(f"  найдено вариантов: {len(variants)}")
+
+        if index < len(items):
+            time.sleep(VARIANTS_DELAY)
+
+    return rows
+
+
 if __name__ == "__main__":
-    if __name__ == "__main__":
-        items = load_items()
+    items = load_items()
+
+    print("=== Цены по списку ===")
     prices = collect_prices(items)
-    print(f"\nСобрано: {len(prices)} позиций")
+
+    print("\n=== Варианты по состояниям ===")
+    variants = collect_variants(items)
 
     stamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
-    export_to_excel(prices, f"prices_{stamp}.xlsx")
+    export_to_excel(prices, variants, f"prices_{stamp}.xlsx")
