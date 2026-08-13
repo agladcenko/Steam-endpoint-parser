@@ -11,7 +11,6 @@ ANCHOR = "window.SSR.loaderData"
 
 
 def _extract_loader_data(html: str) -> list | None:
-    """Находит window.SSR.loaderData и корректно разбирает JSON-массив."""
     start = html.find(ANCHOR)
     if start == -1:
         return None
@@ -29,7 +28,6 @@ def _extract_loader_data(html: str) -> list | None:
 
 
 def _find_payload(outer: list) -> dict | None:
-    """Ищет среди элементов тот, в котором есть buckets."""
     for item in outer:
         if not isinstance(item, str):
             continue
@@ -43,14 +41,13 @@ def _find_payload(outer: list) -> dict | None:
 
 
 def _build_variants(payload: dict) -> list[dict]:
-    """Собирает список вариантов предмета из buckets."""
     variants = []
     for bucket in payload.get("buckets") or []:
         raw_price = bucket.get("min_price")
         variants.append({
             "name": bucket.get("bucket_id"),
             "exterior": bucket.get("localized_name_inside_group"),
-            "min_price": int(raw_price) / 100 if raw_price else None,
+            "min_price": int(raw_price) / 100 if raw_price and int(raw_price) > 0 else None,
         })
     return variants
 
@@ -60,11 +57,7 @@ def get_variants(
         retries: int = 3,
         delay: int = 5,
 ) -> list[dict] | None:
-    """
-    Парсит HTML-страницу листинга и достаёт цены по всем состояниям предмета.
-    Данные лежат в JSON внутри <script>, а не в готовой вёрстке.
-    Steam отдаёт их не всегда, поэтому есть повторные попытки.
-    """
+
     url = BASE_URL + quote(market_hash_name)
 
     for attempt in range(1, retries + 1):

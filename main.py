@@ -7,8 +7,8 @@ from listing_parser import get_variants
 from parsers import parse_price, parse_volume
 from exporter import export_to_excel
 
-DELAY = 4          # пауза между запросами цен
-VARIANTS_DELAY = 6  # пауза между запросами HTML-страниц, они тяжелее
+DELAY = 4
+VARIANTS_DELAY = 6
 
 
 def load_items(path: str = "items.json") -> list[str]:
@@ -42,7 +42,6 @@ def collect_prices(items: list[str]) -> list[dict]:
 
 
 def collect_variants(items: list[str]) -> list[dict]:
-    """Собирает цены по всем состояниям для каждого предмета."""
     rows = []
 
     for index, name in enumerate(items, start=1):
